@@ -102,6 +102,31 @@ def get_artist(artist_id: int) -> Dict[str, Any]:
 def update_artist(artist: Dict[str, Any]) -> None:
     api_put("/api/v1/artist", artist)
 
+def switch_search_to_done(artist_id: int, name: str, search_tid: int, done_tid: int) -> bool:
+    artist = get_artist(artist_id)
+    tags = artist.get("tags") or []
+    if not isinstance(tags, list):
+        tags = []
+    new_tags = []
+    for t in tags:
+        try:
+            ti = int(t)
+        except Exception:
+            continue
+        if ti == search_tid:
+            continue
+        new_tags.append(ti)
+    if done_tid not in new_tags:
+        new_tags.append(done_tid)
+    artist["tags"] = sorted(list({int(x) for x in new_tags}))
+    try:
+        update_artist(artist)
+        log("lidarr_search", f"SEARCH->DONE: {name} id={artist_id}")
+        return True
+    except Exception as e:
+        log("lidarr_search", f"ERROR update_artist {name} id={artist_id}: {e}")
+        return False
+
 def wanted_missing_count_for_artist(artist_id: int) -> int:
     # best-effort server-side filter
     for params in ({"artistId": artist_id, "page": 1, "pageSize": 1}, {"artistId": artist_id}):
@@ -193,28 +218,8 @@ def main() -> None:
 
         missing_count = wanted_missing_count_for_artist(aid)
         if missing_count <= 0:
-            artist = get_artist(aid)
-            tags = artist.get("tags") or []
-            if not isinstance(tags, list):
-                tags = []
-            new_tags = []
-            for t in tags:
-                try:
-                    ti = int(t)
-                except Exception:
-                    continue
-                if ti == search_tid:
-                    continue
-                new_tags.append(ti)
-            if done_tid not in new_tags:
-                new_tags.append(done_tid)
-            artist["tags"] = sorted(list({int(x) for x in new_tags}))
-            try:
-                update_artist(artist)
+            if switch_search_to_done(aid, name, search_tid, done_tid):
                 search_to_done += 1
-                log("lidarr_search", f"SEARCH->DONE (no missing): {name} id={aid}")
-            except Exception as e:
-                log("lidarr_search", f"ERROR update_artist {name} id={aid}: {e}")
             continue
 
         eligible.append(a)
@@ -238,6 +243,8 @@ def main() -> None:
         if queue_missing_search(aid, name):
             state["artists"].setdefault(str(aid), {})["last_searched_utc"] = now.isoformat()
             searched += 1
+            if switch_search_to_done(aid, name, search_tid, done_tid):
+                search_to_done += 1
 
     save_state(state)
     log("lidarr_search", f"Done. search_to_done={search_to_done} searched={searched} cooldown_skipped={cooldown_skipped} state={STATE_PATH}")
