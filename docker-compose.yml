@@ -8,7 +8,7 @@ services:
     command: ["/app/run_sonarr.sh"]
     environment:
       SONARR_URL: "http://sonarr:8989"
-      SONARR_API_KEY: "0fbf914c595e49e99acef69f311e62ac"
+      SONARR_API_KEY: "api-key"
       SONARR_TAG_SEARCH: "search"
       SONARR_TAG_DONE: "done"
       SONARR_COOLDOWN_DAYS: "21"
@@ -33,7 +33,7 @@ services:
     command: ["/app/run_radarr.sh"]
     environment:
       RADARR_URL: "http://radarr:7878"
-      RADARR_API_KEY: "8dd21092c05343828f397fd542646472"
+      RADARR_API_KEY: "api-key"
       RADARR_TAG_SEARCH: "search"
       RADARR_TAG_DONE: "done"
       RADARR_COOLDOWN_DAYS: "21"
@@ -57,7 +57,7 @@ services:
     command: ["/app/run_lidarr.sh"]
     environment:
       LIDARR_URL: "http://lidarr:8686"
-      LIDARR_API_KEY: "47b4741020a74cebaca5b02492480725"
+      LIDARR_API_KEY: "api-key"
       LIDARR_TAG_SEARCH: "search"
       LIDARR_TAG_DONE: "done"
       LIDARR_TAG_FROM: "arr-extended"
